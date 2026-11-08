@@ -73,6 +73,22 @@ export const projects: Project[] = [
   ])
 ];
 
+export const beforeAfterProjects = projects.flatMap(project => {
+  const before = project.media.filter(item => item.stage === "before" && !item.video);
+  const after = project.media.filter(item => item.stage === "after" && !item.video);
+
+  return before.flatMap(beforeImage => {
+    const beforeName = beforeImage.src.split("/").pop()?.replace(/\.[^.]+$/, "") ?? "";
+    const beforeKey = beforeName.replace(/^before/i, "").toLowerCase();
+    const afterImage = after.find(item => {
+      const afterName = item.src.split("/").pop()?.replace(/\.[^.]+$/, "") ?? "";
+      return afterName.replace(/^after/i, "").toLowerCase() === beforeKey;
+    });
+
+    return afterImage ? [{ project, before: beforeImage, after: afterImage }] : [];
+  });
+});
+
 export const hero = {
   src: "/projects/projects/temp.webp",
   alt: {

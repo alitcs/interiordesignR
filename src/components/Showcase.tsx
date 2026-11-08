@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { hero, projects, type Project, type ProjectMedia } from "../data/media";
+import { beforeAfterProjects, hero, projects, type Project, type ProjectMedia } from "../data/media";
 import { useLang } from "../i18n/LangContext";
 
 function MediaView({ item, alt, className, preview = false }: { item: ProjectMedia; alt: string; className?: string; preview?: boolean }) {
@@ -36,6 +36,48 @@ function ProjectCard({ project, index, onOpen }: { project: Project; index: numb
           <span className="project-card__explore" aria-hidden="true">↗</span>
         </span>
       </button>
+    </article>
+  );
+}
+
+function BeforeAfterCard({ project, before, after, index }: {
+  project: Project;
+  before: ProjectMedia;
+  after: ProjectMedia;
+  index: number;
+}) {
+  const { t } = useLang();
+  const [split, setSplit] = useState(50);
+  const room = t(`room.${project.room}`);
+
+  return (
+    <article className="before-after-card">
+      <div className="before-after-card__image" style={{ clipPath: "inset(0)" }}>
+        <img className="before-after-card__before" src={before.src} alt={`${room} — ${t("work.stage.before")}`} loading="lazy" decoding="async" />
+        <div className="before-after-card__reveal" style={{ clipPath: `inset(0 0 0 ${split}%)` }}>
+          <img className="before-after-card__after" src={after.src} alt={`${room} — ${t("work.stage.after")}`} loading="lazy" decoding="async" />
+        </div>
+        <span className="before-after-card__label before-after-card__label--before">{t("work.stage.before")}</span>
+        <span className="before-after-card__label before-after-card__label--after">{t("work.stage.after")}</span>
+        <span className="before-after-card__divider" style={{ left: `${split}%` }} aria-hidden="true">
+          <span>↔</span>
+        </span>
+        <input
+          className="before-after-card__control"
+          type="range"
+          min="0"
+          max="100"
+          value={split}
+          onChange={event => setSplit(Number(event.target.value))}
+          aria-label={`${t("work.compare")} — ${room} ${index + 1}`}
+          aria-valuetext={`${t("work.stage.before")}: ${100 - split}%, ${t("work.stage.after")}: ${split}%`}
+        />
+      </div>
+      <div className="before-after-card__caption">
+        <span className="before-after-card__number">{t("work.projectLabel")} {String(index + 1).padStart(2, "0")}</span>
+        <h3>{room}</h3>
+        <span className="before-after-card__hint">{t("work.dragCompare")}</span>
+      </div>
     </article>
   );
 }
@@ -182,6 +224,20 @@ export function Work() {
         <h2 id="work-title">{t("work.title")}</h2>
         <p>{t("work.intro")}</p>
       </header>
+      {beforeAfterProjects.length > 0 && (
+        <section className="before-after" aria-labelledby="before-after-title">
+          <div className="before-after__intro">
+            <p className="eyebrow">{t("work.comparisonEyebrow")}</p>
+            <h2 id="before-after-title">{t("work.comparisonTitle")}</h2>
+            <p>{t("work.compareIntro")}</p>
+          </div>
+          <div className="before-after__grid">
+            {beforeAfterProjects.map((comparison, index) => (
+              <BeforeAfterCard key={comparison.before.src} {...comparison} index={index} />
+            ))}
+          </div>
+        </section>
+      )}
       <div className="project-grid" ref={gridRef}>
         {projects.map((project, index) => (
           <ProjectCard
