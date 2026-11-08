@@ -1,75 +1,117 @@
-import { hero, projects, type MediaItem, type Project } from "../data/media";
+import { useState } from "react";
+import { comparisons, hero, inProgress, projectSite, type Comparison, type Photo } from "../data/media";
 import { useLang } from "../i18n/LangContext";
 
-export function Placeholder({ tone = "a", label }: { tone?: string; label?: boolean }) {
-  const { t } = useLang();
-  return (
-    <div className={`ph ph--${tone}`}>
-      <span className="ph__win" />
-      {label && <span className="ph__label">{t("work.soon")}</span>}
-    </div>
-  );
-}
-
-function Media({ item, tone, label }: { item: MediaItem; tone?: string; label?: boolean }) {
-  if (!item.src) return <Placeholder tone={tone} label={label} />;
-  if (item.type === "video") return <video src={item.src} poster={item.poster} autoPlay muted loop playsInline />;
-  return <img src={item.src} alt="" decoding="async" />;
+function Image({ photo, className = "", eager = false }: { photo: Photo; className?: string; eager?: boolean }) {
+  const { lang } = useLang();
+  return <img className={className} src={photo.src} alt={photo.alt[lang]} decoding="async" loading={eager ? "eager" : "lazy"} />;
 }
 
 export function Hero() {
   const { t } = useLang();
   return (
     <section className="hero" id="top">
-      <div className="hero__stick">
-        <p className="hero__eyebrow">{t("hero.eyebrow")}</p>
+      <div className="hero__image"><Image photo={hero} eager /></div>
+      <div className="hero__veil" />
+      <div className="hero__content">
+        <p className="hero__eyebrow"><span className="hero__dot" />{t("hero.eyebrow")}</p>
         <h1 className="hero__title">
-          <span className="hl hl--a"><span>{t("hero.l1")}</span></span>
-          <span className="hl hl--b"><span dangerouslySetInnerHTML={{ __html: t("hero.l2") }} /></span>
+          <span>{t("hero.l1")}</span>
+          <span dangerouslySetInnerHTML={{ __html: t("hero.l2") }} />
         </h1>
-        <div className="hero__frame"><div className="hero__img"><Media item={hero} tone="a" /></div></div>
-        <a className="cue" href="#statement"><span className="cue__line" /><span>{t("hero.scroll")}</span></a>
+        <div className="hero__bottom">
+          <p>{t("hero.intro")}</p>
+          <a className="hero__link" href="#work"><span>{t("hero.explore")}</span><span aria-hidden="true">↘</span></a>
+        </div>
       </div>
+      <div className="hero__index" aria-hidden="true"><span>01</span><i /><span>03</span></div>
     </section>
   );
 }
 
 export function Statement() {
   const { t } = useLang();
-  const words = t("statement").split(" ");
   return (
-    <section className="statement-wrap" id="statement">
-      <p className="statement" style={{ ["--n" as string]: words.length }}>
-        {words.map((w, i) => <span key={i} style={{ ["--i" as string]: i }}>{w} </span>)}
-      </p>
+    <section className="manifesto" aria-label={t("statement.label")}>
+      <p className="eyebrow">{t("statement.label")}</p>
+      <p className="manifesto__copy">{t("statement")}</p>
+      <span className="manifesto__mark" aria-hidden="true">I<i />S</span>
     </section>
   );
 }
 
-function Scene({ p, i, total }: { p: Project; i: number; total: number }) {
+function ComparisonCard({ id, title, room, before, after }: Comparison) {
   const { lang, t } = useLang();
-  const n = (x: number) => String(x).padStart(2, "0");
+  const [split, setSplit] = useState(50);
+
   return (
-    <article className="scene" style={{ zIndex: i + 1 }}>
-      <div className="scene__inner">
-        <div className="scene__media"><Media item={p} tone={p.tone} label /></div>
-        <div className="scene__shade" />
-        <div className="scene__text">
-          <div className="scene__meta">
-            <span>{n(i + 1)} / {n(total)}</span>
-            <span>{t(`room.${p.room}`)} · {p.year}</span>
-          </div>
-          <h2>{p.title[lang]}</h2>
+    <article className={`comparison-card comparison-card--${id}`} id={`project-${id}`}>
+      <div className="comparison-card__topline">
+        <span className="comparison-card__number">{String(comparisons.findIndex(item => item.id === id) + 1).padStart(2, "0")}</span>
+        <span>{t(`room.${room}`)}</span>
+      </div>
+      <div className="comparison-card__image" style={{ ["--split" as string]: `${split}%` }}>
+        <Image photo={before} className="comparison-card__before" />
+        <div className="comparison-card__reveal">
+          <Image photo={after} className="comparison-card__after" />
         </div>
+        {split >= 15 && <span className="comparison-card__label comparison-card__label--before">{t("work.before")}</span>}
+        {split <= 85 && <span className="comparison-card__label comparison-card__label--after">{t("work.after")}</span>}
+        <span className="comparison-card__divider" aria-hidden="true">
+          <span className="comparison-card__handle">↔</span>
+        </span>
+        <span className="comparison-card__hint" aria-hidden="true">{t("work.drag")}</span>
+        <input
+          className="comparison-card__control"
+          type="range"
+          min="0"
+          max="100"
+          value={split}
+          onChange={event => setSplit(Number(event.target.value))}
+          aria-label={`${t("work.compare")} — ${title[lang]}`}
+          aria-valuetext={`${t("work.before")}: ${split}%, ${t("work.after")}: ${100 - split}%`}
+        />
+      </div>
+      <div className="comparison-card__caption">
+        <h3>{title[lang]}</h3>
+        <span>{t("work.drag")}</span>
       </div>
     </article>
   );
 }
 
 export function Work() {
+  const { lang, t } = useLang();
   return (
-    <section className="work" id="work">
-      {projects.map((p, i) => <Scene key={p.title.en} p={p} i={i} total={projects.length} />)}
+    <section className="work" id="work" aria-labelledby="work-title">
+      <header className="work__intro">
+        <div className="work__intro-index"><span>01</span><span>{t("work.eyebrow")}</span></div>
+        <h2 id="work-title">{t("work.title")}</h2>
+        <p>{t("work.intro")}</p>
+      </header>
+
+      <div className="comparison-grid">
+        {comparisons.map(project => <ComparisonCard key={project.id} {...project} />)}
+      </div>
+
+      <section className="work__progress" aria-labelledby="progress-title">
+        <div className="work__progress-copy">
+          <p className="eyebrow">{t("work.inProgress")}</p>
+          <h2 id="progress-title">{inProgress.title[lang]}</h2>
+          <p>{t("work.inProgressNote")}</p>
+          <span className="work__progress-tag"><i />{t("work.status.inProgress")}</span>
+        </div>
+        <div className="work__progress-image"><Image photo={inProgress.photo} /></div>
+        <span className="work__progress-index" aria-hidden="true">02</span>
+      </section>
+
+      <figure className="site-card">
+        <Image photo={projectSite} />
+        <figcaption>
+          <span>{t("work.siteTag")}</span>
+          <span>{t("work.siteTitle")}</span>
+        </figcaption>
+      </figure>
     </section>
   );
 }

@@ -5,13 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Interior Studio — Considered interiors, beautifully made</title>
   <meta name="description" content="Interior design and decoration for homes. A calm, professional process from first conversation to the final styled detail.">
-  <meta name="theme-color" content="#f4efe8">
+  <meta name="theme-color" content="#f2f0e9">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231b1a18'/%3E%3Cpath d='M10 23V15a6 6 0 0 1 12 0v8M7 23h18' stroke='%23c9a779' stroke-width='1.6' fill='none'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&family=Vazirmatn:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
 <body>
+  <form name="project-inquiry" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+    <input name="name">
+    <input name="email" type="email">
+    <textarea name="message"></textarea>
+    <input name="bot-field">
+  </form>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

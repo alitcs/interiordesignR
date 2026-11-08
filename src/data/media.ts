@@ -1,29 +1,71 @@
-/*
- * EDIT THIS FILE to add the designer's real work.
- *
- * 1. Drop images/videos into  /public/media  (then use src: "/media/living-01.jpg")
- * 2. Set `src` on a project (and `poster` for videos). Leave `src` empty to show a placeholder.
- * 3. Add or remove projects freely: the grid, filters and full-screen viewer update automatically.
- *
- * room: one of "living" | "bedroom" | "kitchen" | "other"
- * type: "image" | "video"
- * tone: placeholder colour (a-e); ignored once a real src is set.
- */
 export type Room = "living" | "bedroom" | "kitchen" | "other";
-export interface MediaItem { type: "image" | "video"; src: string; poster?: string }
-export interface Project extends MediaItem {
-  room: Room; tone: "a" | "b" | "c" | "d" | "e"; year: number; title: { en: string; fa: string };
+export type Lang = "en" | "fa";
+export type LocalizedText = Record<Lang, string>;
+
+export interface Photo {
+  src: string;
+  alt: LocalizedText;
 }
 
-export const hero: MediaItem = { type: "image", src: "" }; // hero photo or looping video
+export interface Comparison {
+  id: string;
+  title: LocalizedText;
+  room: Room;
+  before: Photo;
+  after: Photo;
+}
 
-export const projects: Project[] = [
-    { room: "living",  type: "image", src: "", tone: "a", year: 2025, title: { en: "Quiet Living Room",   fa: "اتاق نشیمن آرام" } },
-    { room: "bedroom", type: "image", src: "", tone: "c", year: 2025, title: { en: "Linen Bedroom",       fa: "اتاق خواب کتانی" } },
-    { room: "kitchen", type: "video", src: "", poster: "", tone: "d", year: 2024, title: { en: "Kitchen Walkthrough", fa: "تور آشپزخانه" } },
-    { room: "living",  type: "image", src: "", tone: "b", year: 2024, title: { en: "Warm Reading Corner", fa: "گوشه مطالعه گرم" } },
-    { room: "other",   type: "image", src: "", tone: "e", year: 2024, title: { en: "Entry & Hallway",     fa: "ورودی و راهرو" } },
-    { room: "bedroom", type: "image", src: "", tone: "a", year: 2023, title: { en: "Guest Suite",         fa: "اتاق مهمان" } },
-    { room: "kitchen", type: "image", src: "", tone: "c", year: 2023, title: { en: "Dining Space",        fa: "فضای ناهارخوری" } },
-    { room: "living",  type: "video", src: "", poster: "", tone: "d", year: 2023, title: { en: "Living Room Reveal",  fa: "رونمایی اتاق نشیمن" } }
-  ];
+export interface ProjectPhoto {
+  id: string;
+  title: LocalizedText;
+  room: Room;
+  photo: Photo;
+}
+
+const picture = (name: string, en: string, fa: string): Photo => ({
+  src: `/media/pictures/${name}`,
+  alt: { en, fa }
+});
+
+export const hero: Photo = picture(
+  "kitchen-after.webp",
+  "Finished kitchen in warm wood and white",
+  "آشپزخانه تکمیل‌شده با چوب گرم و رنگ سفید"
+);
+
+export const comparisons: Comparison[] = [
+  {
+    id: "kitchen-01",
+    title: { en: "A quieter kind of kitchen", fa: "آشپزخانه‌ای آرام‌تر" },
+    room: "kitchen",
+    before: picture("kitchen-before.webp", "Kitchen before its renovation", "آشپزخانه پیش از بازسازی"),
+    after: picture("kitchen-after.webp", "Kitchen after its renovation", "آشپزخانه پس از بازسازی")
+  },
+  {
+    id: "kitchen-02",
+    title: { en: "A brighter everyday", fa: "روشنایی در زندگی روزمره" },
+    room: "kitchen",
+    before: picture("kitchen-before1.webp", "Second kitchen before its renovation", "آشپزخانه دوم پیش از بازسازی"),
+    after: picture("kitchen-after1.webp", "Second kitchen after its renovation", "آشپزخانه دوم پس از بازسازی")
+  },
+  {
+    id: "living-room",
+    title: { en: "Room to slow down", fa: "جایی برای آرام گرفتن" },
+    room: "living",
+    before: picture("living-room-before.webp", "Living room before its refresh", "اتاق نشیمن پیش از بازطراحی"),
+    after: picture("living-room-after.webp", "Living room after its refresh", "اتاق نشیمن پس از بازطراحی")
+  }
+];
+
+export const inProgress: ProjectPhoto = {
+  id: "dresser",
+  title: { en: "Walnut, taking shape", fa: "شکل‌گیری کمد گردویی" },
+  room: "bedroom",
+  photo: picture("dresser-in-progress.webp", "Walnut dressing room during installation", "کمد لباس گردویی هنگام نصب")
+};
+
+export const projectSite = picture(
+  "building-site.webp",
+  "The exterior of a building at a project site",
+  "نمای بیرونی ساختمان در محل پروژه"
+);

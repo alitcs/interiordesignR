@@ -1,17 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Lenis from "lenis";
 
-const clamp = (n: number, a = 0, b = 1) => Math.min(b, Math.max(a, n));
-
 /**
- * One scroll loop drives everything: smooth scrolling (Lenis), the hero frame expanding,
- * the statement lighting up word by word, and the project scenes stacking. Values are written
- * straight to CSS variables so React never re-renders while scrolling.
+ * Keep scroll progress and header state in sync without rerendering on every scroll event.
  */
 export function useScrollEffects() {
   const [solid, setSolid] = useState(false);
-  const [hidden, setHidden] = useState(false);
-  const last = useRef(0);
 
   useEffect(() => {
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -40,30 +34,6 @@ export function useScrollEffects() {
       const root = document.documentElement;
       root.style.setProperty("--progress", String(max > 0 ? y / max : 0));
       setSolid(s => { const n = y > 40; return s === n ? s : n; });
-      setHidden(h => { const n = y > last.current && y > 400; return h === n ? h : n; });
-      last.current = y;
-
-      const hero = document.querySelector<HTMLElement>(".hero");
-      if (hero) {
-        const span = hero.offsetHeight - vh;
-        hero.style.setProperty("--e", String(clamp(y / (span * 0.7))));
-      }
-
-      const st = document.querySelector<HTMLElement>(".statement");
-      if (st) {
-        const r = st.getBoundingClientRect();
-        const p = clamp((vh * 0.85 - r.top) / (r.height + vh * 0.35));
-        st.style.setProperty("--lit", String(p * (st.children.length + 2)));
-      }
-
-      document.querySelectorAll<HTMLElement>(".scene").forEach((el, i, all) => {
-        const top = el.getBoundingClientRect().top;
-        const enter = clamp(1 - top / vh);
-        const next = all[i + 1];
-        const leave = next ? clamp(1 - next.getBoundingClientRect().top / vh) : 0;
-        el.style.setProperty("--enter", String(enter));
-        el.style.setProperty("--leave", String(leave));
-      });
     };
 
     update();
@@ -76,5 +46,5 @@ export function useScrollEffects() {
     };
   }, []);
 
-  return { solid, hidden };
+  return { solid };
 }
