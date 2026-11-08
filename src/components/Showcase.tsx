@@ -1,17 +1,122 @@
-import { useState } from "react";
-import { comparisons, hero, inProgress, projectSite, type Comparison, type Photo } from "../data/media";
+import { useEffect, useRef, useState } from "react";
+import { hero, projects, type Project, type ProjectMedia } from "../data/media";
 import { useLang } from "../i18n/LangContext";
 
-function Image({ photo, className = "", eager = false }: { photo: Photo; className?: string; eager?: boolean }) {
-  const { lang } = useLang();
-  return <img className={className} src={photo.src} alt={photo.alt[lang]} decoding="async" loading={eager ? "eager" : "lazy"} />;
+function MediaView({ item, alt, className, preview = false }: { item: ProjectMedia; alt: string; className?: string; preview?: boolean }) {
+  return item.video
+    ? <video className={className} src={item.src} aria-label={alt} muted loop autoPlay={!preview} playsInline preload="metadata" />
+    : <img className={className} src={item.src} alt={alt} loading="lazy" decoding="async" />;
+}
+
+function coverFor(project: Project): ProjectMedia {
+  const images = project.media.filter(item => !item.video);
+  return images.find(item => item.stage === "after")
+    ?? images.find(item => item.stage === "inprogress")
+    ?? images.find(item => item.stage === "before")
+    ?? images[0];
+}
+
+function ProjectCard({ project, index, onOpen }: { project: Project; index: number; onOpen: () => void }) {
+  const { t } = useLang();
+  const cover = coverFor(project);
+  const title = t(`room.${project.room}`);
+
+  return (
+    <article className="project-card">
+      <button className="project-card__open" type="button" onClick={onOpen} aria-label={`${t("work.openProject")} ${title}, ${index + 1}`}>
+        <div className="project-card__visual">
+          <MediaView item={cover} alt={`${title} — ${t(`work.stage.${cover.stage}`)}`} />
+          <span className="project-card__index"><span>{t("work.projectLabel")}</span><span>{String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}</span></span>
+          <span className="project-card__overlay" aria-hidden="true">
+            <span>{t("work.viewProject")}</span><span className="project-card__overlay-arrow">↗</span>
+          </span>
+        </div>
+        <span className="project-card__caption">
+          <span className="project-card__title">{title}</span>
+          <span className="project-card__explore" aria-hidden="true">↗</span>
+        </span>
+      </button>
+    </article>
+  );
+}
+
+function ProjectViewer({ project, onClose }: { project: Project; onClose: () => void }) {
+  const { t } = useLang();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const viewerRef = useRef<HTMLDivElement>(null);
+  const active = project.media[activeIndex];
+  const alt = `${t(`room.${project.room}`)} — ${t(`work.stage.${active.stage}`)}`;
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    viewerRef.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+      if (event.key === "ArrowRight") setActiveIndex(index => (index + 1) % project.media.length);
+      if (event.key === "ArrowLeft") setActiveIndex(index => (index - 1 + project.media.length) % project.media.length);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [onClose, project.media.length]);
+
+  return (
+    <div className="project-viewer" role="presentation" onMouseDown={event => {
+      if (event.target === event.currentTarget) onClose();
+    }}>
+      <section
+        className="project-viewer__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t(`room.${project.room}`)}
+        ref={viewerRef}
+        tabIndex={-1}
+      >
+        <header className="project-viewer__header">
+          <div>
+            <p className="eyebrow">{t(`room.${project.room}`)}</p>
+            <h2>{t(`room.${project.room}`)}</h2>
+          </div>
+          <button className="project-viewer__close" type="button" onClick={onClose} aria-label={t("work.closeProject")}>×</button>
+        </header>
+        <div className="project-viewer__media">
+          <MediaView item={active} alt={alt} />
+          <span className={`project-card__status project-card__status--${active.stage}`}>
+            <i aria-hidden="true" />{t(`work.stage.${active.stage}`)}
+          </span>
+          {project.media.length > 1 && (
+            <div className="project-viewer__counter">{String(activeIndex + 1).padStart(2, "0")} / {String(project.media.length).padStart(2, "0")}</div>
+          )}
+        </div>
+        <div className="project-viewer__rail" aria-label={t("work.projectMedia")}>
+          {project.media.map((item, index) => (
+            <button
+              className={`project-viewer__thumb${index === activeIndex ? " is-active" : ""}`}
+              key={item.src}
+              type="button"
+              onClick={() => setActiveIndex(index)}
+              aria-label={`${t(`work.stage.${item.stage}`)} ${index + 1}`}
+              aria-pressed={index === activeIndex}
+            >
+              <MediaView item={item} alt="" preview />
+              {item.video && <span className="project-viewer__play" aria-hidden="true">▶</span>}
+              <span>{t(`work.stage.${item.stage}`)}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
 }
 
 export function Hero() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   return (
     <section className="hero" id="top">
-      <div className="hero__image"><Image photo={hero} eager /></div>
+      <div className="hero__image"><img src={hero.src} alt={hero.alt[lang]} decoding="async" /></div>
       <div className="hero__veil" />
       <div className="hero__content">
         <p className="hero__eyebrow"><span className="hero__dot" />{t("hero.eyebrow")}</p>
@@ -24,7 +129,7 @@ export function Hero() {
           <a className="hero__link" href="#work"><span>{t("hero.explore")}</span><span aria-hidden="true">↘</span></a>
         </div>
       </div>
-      <div className="hero__index" aria-hidden="true"><span>01</span><i /><span>03</span></div>
+      <div className="hero__index" aria-hidden="true"><span>01</span><i /><span>13</span></div>
     </section>
   );
 }
@@ -40,48 +145,36 @@ export function Statement() {
   );
 }
 
-function ComparisonCard({ id, title, room, before, after }: Comparison) {
-  const { lang, t } = useLang();
-  const [split, setSplit] = useState(50);
-
-  return (
-    <article className={`comparison-card comparison-card--${id}`} id={`project-${id}`}>
-      <div className="comparison-card__topline">
-        <span className="comparison-card__number">{String(comparisons.findIndex(item => item.id === id) + 1).padStart(2, "0")}</span>
-        <span>{t(`room.${room}`)}</span>
-      </div>
-      <div className="comparison-card__image" style={{ ["--split" as string]: `${split}%` }}>
-        <Image photo={before} className="comparison-card__before" />
-        <div className="comparison-card__reveal">
-          <Image photo={after} className="comparison-card__after" />
-        </div>
-        {split >= 15 && <span className="comparison-card__label comparison-card__label--before">{t("work.before")}</span>}
-        {split <= 85 && <span className="comparison-card__label comparison-card__label--after">{t("work.after")}</span>}
-        <span className="comparison-card__divider" aria-hidden="true">
-          <span className="comparison-card__handle">↔</span>
-        </span>
-        <span className="comparison-card__hint" aria-hidden="true">{t("work.drag")}</span>
-        <input
-          className="comparison-card__control"
-          type="range"
-          min="0"
-          max="100"
-          value={split}
-          onChange={event => setSplit(Number(event.target.value))}
-          aria-label={`${t("work.compare")} — ${title[lang]}`}
-          aria-valuetext={`${t("work.before")}: ${split}%, ${t("work.after")}: ${100 - split}%`}
-        />
-      </div>
-      <div className="comparison-card__caption">
-        <h3>{title[lang]}</h3>
-        <span>{t("work.drag")}</span>
-      </div>
-    </article>
-  );
-}
-
 export function Work() {
-  const { lang, t } = useLang();
+  const { t } = useLang();
+  const [openProject, setOpenProject] = useState<Project | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const cards = grid.querySelectorAll<HTMLElement>(".project-card");
+    if (!("IntersectionObserver" in window)) {
+      cards.forEach(card => card.classList.add("is-visible"));
+      return;
+    }
+
+    grid.classList.add("has-reveal");
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+    cards.forEach(card => observer.observe(card));
+    return () => {
+      observer.disconnect();
+      grid.classList.remove("has-reveal");
+    };
+  }, []);
+
   return (
     <section className="work" id="work" aria-labelledby="work-title">
       <header className="work__intro">
@@ -89,29 +182,17 @@ export function Work() {
         <h2 id="work-title">{t("work.title")}</h2>
         <p>{t("work.intro")}</p>
       </header>
-
-      <div className="comparison-grid">
-        {comparisons.map(project => <ComparisonCard key={project.id} {...project} />)}
+      <div className="project-grid" ref={gridRef}>
+        {projects.map((project, index) => (
+          <ProjectCard
+            key={project.id}
+            project={project}
+            index={index}
+            onOpen={() => setOpenProject(project)}
+          />
+        ))}
       </div>
-
-      <section className="work__progress" aria-labelledby="progress-title">
-        <div className="work__progress-copy">
-          <p className="eyebrow">{t("work.inProgress")}</p>
-          <h2 id="progress-title">{inProgress.title[lang]}</h2>
-          <p>{t("work.inProgressNote")}</p>
-          <span className="work__progress-tag"><i />{t("work.status.inProgress")}</span>
-        </div>
-        <div className="work__progress-image"><Image photo={inProgress.photo} /></div>
-        <span className="work__progress-index" aria-hidden="true">02</span>
-      </section>
-
-      <figure className="site-card">
-        <Image photo={projectSite} />
-        <figcaption>
-          <span>{t("work.siteTag")}</span>
-          <span>{t("work.siteTitle")}</span>
-        </figcaption>
-      </figure>
+      {openProject && <ProjectViewer project={openProject} onClose={() => setOpenProject(null)} />}
     </section>
   );
 }

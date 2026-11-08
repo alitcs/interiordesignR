@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { siteVisit } from "../data/media";
 import { useLang } from "../i18n/LangContext";
 
 export function Nav({ solid }: { solid: boolean }) {
@@ -23,7 +24,7 @@ export function Nav({ solid }: { solid: boolean }) {
 }
 
 export function Contact() {
-  const { t } = useLang();
+  const { lang, t } = useLang();
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -56,6 +57,14 @@ export function Contact() {
       <div className="contact__inner">
         <p className="eyebrow">{t("contact.eyebrow")}</p>
         <h2 dangerouslySetInnerHTML={{ __html: t("contact.title") }} />
+        <aside className="contact__visit">
+          <img src={siteVisit.src} alt={siteVisit.alt[lang]} loading="lazy" decoding="async" />
+          <div className="contact__visit-copy">
+            <p className="eyebrow">{t("contact.visitEyebrow")}</p>
+            <h3>{t("contact.visitTitle")}</h3>
+            <p>{t("contact.visitCopy")}</p>
+          </div>
+        </aside>
         <form className="contact__form" name="project-inquiry" method="POST" onSubmit={handleSubmit}>
           <input type="hidden" name="form-name" value="project-inquiry" />
           <div className="contact__honeypot" aria-hidden="true">
@@ -86,7 +95,7 @@ export function Footer() {
   const { t } = useLang();
   return (
     <footer className="foot">
-      <a className="foot__brand" href="#top"><span className="foot__mark">IS</span><span>{t("brand")}</span></a>
+      <a className="foot__brand" href="#top"><span className="foot__mark">IDR</span><span>{t("brand")}</span></a>
       <span>© {new Date().getFullYear()} {t("brand")}</span>
       <a className="foot__top" href="#top">{t("foot.top")} <span aria-hidden="true">↑</span></a>
     </footer>

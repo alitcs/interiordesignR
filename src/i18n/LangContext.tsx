@@ -21,7 +21,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
     const el = document.documentElement;
     el.lang = lang;
     el.dir = lang === "fa" ? "rtl" : "ltr";
-    document.title = lang === "fa" ? "استودیو طراحی داخلی — فضاهایی زیبا برای زیستن" : "Interior Studio — Considered interiors, beautifully made";
+    document.title = lang === "fa" ? "طراحی داخلی R — فضاهایی زیبا برای زیستن" : "Interior Design R — Considered interiors, beautifully made";
   }, [lang]);
 
   const toggle = useCallback(() => {

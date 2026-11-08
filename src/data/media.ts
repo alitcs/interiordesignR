@@ -1,71 +1,90 @@
-export type Room = "living" | "bedroom" | "kitchen" | "other";
+export type Room = "living" | "bedroom" | "kitchen" | "closet";
 export type Lang = "en" | "fa";
 export type LocalizedText = Record<Lang, string>;
+export type MediaStage = "before" | "after" | "inprogress" | "before-after";
 
-export interface Photo {
+export interface ProjectMedia {
   src: string;
-  alt: LocalizedText;
+  stage: MediaStage;
+  video: boolean;
 }
 
-export interface Comparison {
+export interface Project {
   id: string;
-  title: LocalizedText;
   room: Room;
-  before: Photo;
-  after: Photo;
+  media: ProjectMedia[];
 }
 
-export interface ProjectPhoto {
-  id: string;
-  title: LocalizedText;
-  room: Room;
-  photo: Photo;
-}
+const media = (project: string, file: string): ProjectMedia => {
+  const stem = file.slice(0, file.lastIndexOf(".")).toLowerCase();
+  const stage: MediaStage = stem.startsWith("inprogress")
+    ? "inprogress"
+    : stem.startsWith("before&after")
+      ? "before-after"
+      : stem.startsWith("before")
+        ? "before"
+        : "after";
 
-const picture = (name: string, en: string, fa: string): Photo => ({
-  src: `/media/pictures/${name}`,
-  alt: { en, fa }
-});
-
-export const hero: Photo = picture(
-  "kitchen-after.webp",
-  "Finished kitchen in warm wood and white",
-  "آشپزخانه تکمیل‌شده با چوب گرم و رنگ سفید"
-);
-
-export const comparisons: Comparison[] = [
-  {
-    id: "kitchen-01",
-    title: { en: "A quieter kind of kitchen", fa: "آشپزخانه‌ای آرام‌تر" },
-    room: "kitchen",
-    before: picture("kitchen-before.webp", "Kitchen before its renovation", "آشپزخانه پیش از بازسازی"),
-    after: picture("kitchen-after.webp", "Kitchen after its renovation", "آشپزخانه پس از بازسازی")
-  },
-  {
-    id: "kitchen-02",
-    title: { en: "A brighter everyday", fa: "روشنایی در زندگی روزمره" },
-    room: "kitchen",
-    before: picture("kitchen-before1.webp", "Second kitchen before its renovation", "آشپزخانه دوم پیش از بازسازی"),
-    after: picture("kitchen-after1.webp", "Second kitchen after its renovation", "آشپزخانه دوم پس از بازسازی")
-  },
-  {
-    id: "living-room",
-    title: { en: "Room to slow down", fa: "جایی برای آرام گرفتن" },
-    room: "living",
-    before: picture("living-room-before.webp", "Living room before its refresh", "اتاق نشیمن پیش از بازطراحی"),
-    after: picture("living-room-after.webp", "Living room after its refresh", "اتاق نشیمن پس از بازطراحی")
-  }
-];
-
-export const inProgress: ProjectPhoto = {
-  id: "dresser",
-  title: { en: "Walnut, taking shape", fa: "شکل‌گیری کمد گردویی" },
-  room: "bedroom",
-  photo: picture("dresser-in-progress.webp", "Walnut dressing room during installation", "کمد لباس گردویی هنگام نصب")
+  return {
+    src: `/projects/projects/${project}/${file}`,
+    stage,
+    video: file.endsWith(".mp4")
+  };
 };
 
-export const projectSite = picture(
-  "building-site.webp",
-  "The exterior of a building at a project site",
-  "نمای بیرونی ساختمان در محل پروژه"
-);
+const project = (
+  id: string,
+  room: Room,
+  files: string[]
+): Project => ({
+  id,
+  room,
+  media: files.map(file => media(id, file))
+});
+
+export const projects: Project[] = [
+  project("project1-kitchen", "kitchen", [
+    "after.webp", "before.webp", "inprogress.jpg", "inprogress1.jpg", "inprogress2.jpg",
+    "inprogress3.jpg", "inprogress4.jpg", "inprogress5.jpg", "inprogress6.jpg",
+    "inprogress7.jpg", "inprogress8.jpg"
+  ]),
+  project("project2-living-room", "living", ["after.webp", "before.webp"]),
+  project("project3-kitchen", "kitchen", [
+    "after.mp4", "after1.jpg", "after2.jpg", "before1.jpg", "before2.jpg"
+  ]),
+  project("project4-kitchen", "kitchen", [
+    "inprogress.jpg", "inprogress1.jpg", "inprogress2.jpg", "inprogress3.jpg",
+    "inprogress4.jpg", "inprogress5.jpg", "inprogress6.jpg"
+  ]),
+  project("project5-kitchen", "kitchen", ["inprogress.jpg"]),
+  project("project6-closet", "closet", ["after.jpg", "after.mp4", "after1.jpg"]),
+  project("project7-closet", "closet", ["after.jpg"]),
+  project("project8-closet", "closet", ["after.jpg"]),
+  project("project9-closet", "closet", ["after.jpg"]),
+  project("project10-kitchen", "kitchen", [
+    "after.jpg", "after1.jpg", "after2.jpg", "after3.jpg"
+  ]),
+  project("project11-living-room", "living", ["after.jpg", "after1.jpg"]),
+  project("project12-living-room", "living", [
+    "after.jpg", "after1.jpg", "after2.jpg", "before&after.mp4", "inprogress.jpg", "inprogress1.jpg"
+  ]),
+  project("project13-closet", "closet", [
+    "inprogress.jpg", "inprogress.mp4", "inprogress1.jpg", "inprogress2.jpg"
+  ])
+];
+
+export const hero = {
+  src: "/projects/projects/temp.webp",
+  alt: {
+    en: "Renovated kitchen in warm wood and pale stone",
+    fa: "آشپزخانه بازسازی‌شده با چوب گرم و سنگ روشن"
+  } satisfies LocalizedText
+};
+
+export const siteVisit = {
+  src: "/projects/projects/building-site-id-.webp",
+  alt: {
+    en: "Avesta building, a project site",
+    fa: "ساختمان آوستا، محل اجرای یکی از پروژه‌ها"
+  } satisfies LocalizedText
+};
