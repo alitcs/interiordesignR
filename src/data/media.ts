@@ -77,6 +77,7 @@ export const beforeAfterProjects = projects.flatMap(project => {
   const before = project.media.filter(item => item.stage === "before" && !item.video);
   const after = project.media.filter(item => item.stage === "after" && !item.video);
 
+  // Show one comparison per project, even when it has multiple matching image pairs.
   return before.flatMap(beforeImage => {
     const beforeName = beforeImage.src.split("/").pop()?.replace(/\.[^.]+$/, "") ?? "";
     const beforeKey = beforeName.replace(/^before/i, "").toLowerCase();
@@ -86,7 +87,7 @@ export const beforeAfterProjects = projects.flatMap(project => {
     });
 
     return afterImage ? [{ project, before: beforeImage, after: afterImage }] : [];
-  });
+  }).slice(0, 1);
 });
 
 export const hero = {
